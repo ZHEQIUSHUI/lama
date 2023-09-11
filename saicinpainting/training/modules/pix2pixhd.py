@@ -51,7 +51,7 @@ class ResnetBlock(nn.Module):
         conv_block = []
         p = 0
         if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(dilation)]
+            conv_block += [nn.ConstantPad2d(dilation,0)]
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad2d(dilation)]
         elif padding_type == 'zero':
@@ -70,7 +70,7 @@ class ResnetBlock(nn.Module):
 
         p = 0
         if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(second_dilation)]
+            conv_block += [nn.ConstantPad2d(second_dilation,0)]
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad2d(second_dilation)]
         elif padding_type == 'zero':
@@ -113,7 +113,7 @@ class ResnetBlock5x5(nn.Module):
         conv_block = []
         p = 0
         if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(dilation * 2)]
+            conv_block += [nn.ConstantPad2d(dilation * 2,0)]
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad2d(dilation * 2)]
         elif padding_type == 'zero':
@@ -132,7 +132,7 @@ class ResnetBlock5x5(nn.Module):
 
         p = 0
         if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad2d(second_dilation * 2)]
+            conv_block += [nn.ConstantPad2d(second_dilation * 2,0)]
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad2d(second_dilation * 2)]
         elif padding_type == 'zero':
@@ -195,7 +195,7 @@ class MultiDilatedGlobalGenerator(nn.Module):
         if affine is not None:
             up_norm_layer = partial(up_norm_layer, affine=affine)
 
-        model = [nn.ReflectionPad2d(3),
+        model = [nn.ConstantPad2d(3,0),
                  conv_layer(input_nc, ngf, kernel_size=7, padding=0),
                  norm_layer(ngf),
                  activation]
@@ -227,7 +227,7 @@ class MultiDilatedGlobalGenerator(nn.Module):
         for i in range(n_downsampling):
             mult = 2 ** (n_downsampling - i)
             model += deconv_factory(deconv_kind, ngf, mult, up_norm_layer, up_activation, max_features)
-        model += [nn.ReflectionPad2d(3),
+        model += [nn.ConstantPad2d(3,0),
                   nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         if add_out_act:
             model.append(get_activation('tanh' if add_out_act is True else add_out_act))
@@ -260,7 +260,7 @@ class ConfigGlobalGenerator(nn.Module):
         if affine is not None:
             up_norm_layer = partial(up_norm_layer, affine=affine)
 
-        model = [nn.ReflectionPad2d(3),
+        model = [nn.ConstantPad2d(3,0),
                  conv_layer(input_nc, ngf, kernel_size=7, padding=0),
                  norm_layer(ngf),
                  activation]
@@ -316,7 +316,7 @@ class ConfigGlobalGenerator(nn.Module):
         for i in range(n_downsampling):
             mult = 2 ** (n_downsampling - i)
             model += deconv_factory(deconv_kind, ngf, mult, up_norm_layer, up_activation, max_features)
-        model += [nn.ReflectionPad2d(3),
+        model += [nn.ConstantPad2d(3,0),
                   nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         if add_out_act:
             model.append(get_activation('tanh' if add_out_act is True else add_out_act))
@@ -362,7 +362,7 @@ class GlobalGenerator(nn.Module):
         if ffc_positions is not None:
             ffc_positions = collections.Counter(ffc_positions)
 
-        model = [nn.ReflectionPad2d(3),
+        model = [nn.ConstantPad2d(3,0),
                  conv_layer(input_nc, ngf, kernel_size=7, padding=0),
                  norm_layer(ngf),
                  activation]
@@ -426,7 +426,7 @@ class GlobalGenerator(nn.Module):
                                          kernel_size=3, stride=2, padding=1, output_padding=1),
                       up_norm_layer(min(max_features, int(ngf * mult / 2))),
                       up_activation]
-        model += [nn.ReflectionPad2d(3),
+        model += [nn.ConstantPad2d(3,0),
                   nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         if add_out_act:
             model.append(get_activation('tanh' if add_out_act is True else add_out_act))
@@ -460,7 +460,7 @@ class GlobalGeneratorFromSuperChannels(nn.Module):
         channels = self.convert_super_channels(super_channels)
         self.channels = channels
 
-        model = [nn.ReflectionPad2d(3),
+        model = [nn.ConstantPad2d(3,0),
                  nn.Conv2d(input_nc, channels[0], kernel_size=7, padding=0, bias=use_bias),
                  norm_layer(channels[0]),
                  nn.ReLU(True)]
@@ -507,7 +507,7 @@ class GlobalGeneratorFromSuperChannels(nn.Module):
                                            bias=use_bias),
                       norm_layer(channels[n_downsampling+3+i+1]),
                       nn.ReLU(True)]
-        model += [nn.ReflectionPad2d(3)]
+        model += [nn.ConstantPad2d(3,0)]
         model += [nn.Conv2d(channels[2*n_downsampling+3], output_nc, kernel_size=7, padding=0)]
 
         if add_out_act:

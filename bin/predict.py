@@ -63,6 +63,7 @@ def main(predict_config: OmegaConf):
             predict_config.indir += '/'
 
         dataset = make_default_val_dataset(predict_config.indir, **predict_config.dataset)
+        isFrist = True
         for img_i in tqdm.trange(len(dataset)):
             mask_fname = dataset.mask_filenames[img_i]
             cur_out_fname = os.path.join(
@@ -81,14 +82,20 @@ def main(predict_config: OmegaConf):
                 with torch.no_grad():
                     batch = move_to_device(batch, device)
                     batch['mask'] = (batch['mask'] > 0) * 1
-                    batch = model(batch)                    
-                    cur_res = batch[predict_config.out_key][0].permute(1, 2, 0).detach().cpu().numpy()
+                    # model.to_onnx("1.onnx",(batch['image'],batch['mask']))
+                    mask = batch['mask'].type(torch.float)
+                    # print(mask.type())
+                    if isFrist:
+                        isFrist = False
+                        torch.onnx.export(model,(batch['image'],mask),f"{predict_config.model.path}/model.onnx",input_names=("image","mask"),output_names=("inpainted",))
+                    inpainted = model(batch['image'],mask)                    
+                    cur_res = inpainted[0].detach().cpu().numpy()
                     unpad_to_size = batch.get('unpad_to_size', None)
                     if unpad_to_size is not None:
                         orig_height, orig_width = unpad_to_size
                         cur_res = cur_res[:orig_height, :orig_width]
 
-            cur_res = np.clip(cur_res * 255, 0, 255).astype('uint8')
+            cur_res = np.clip(cur_res, 0, 255).astype('uint8')
             cur_res = cv2.cvtColor(cur_res, cv2.COLOR_RGB2BGR)
             cv2.imwrite(cur_out_fname, cur_res)
 
